@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSKA | PRIVATE EXTERIOR DOCENT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100;300;400;500;700&display=swap" rel="stylesheet">
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #ffffff;
+            color: #000000;
+            overflow-x: hidden;
+            letter-spacing: -0.02em;
+        }
+        .option-card {
+            border: 1px solid #f2f2f2;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+            background-color: #ffffff;
+        }
+        .option-card:hover {
+            border-color: #000000;
+        }
+        .option-card.active {
+            border-color: #000000;
+            background-color: #000000;
+            color: #ffffff;
+        }
+        .option-card.active svg {
+            stroke: #ffffff;
+            fill: none;
+        }
+        .option-card.active p, 
+        .option-card.active span,
+        .option-card.active li,
+        .option-card.active .btn-detail,
+        .option-card.active .btn-gallery {
+            color: rgba(255, 255, 255, 0.8) !important;
+        }
+        .option-card.active .btn-detail,
+        .option-card.active .btn-gallery {
+            border-color: rgba(255, 255, 255, 0.3) !important;
+        }
+        .option-card.active .tag-special {
+            border-color: rgba(255, 255, 255, 0.3);
+            background-color: transparent;
+            color: white !important;
+        }
+        .progress-bar {
+            height: 1px;
+            background-color: #000000;
+            transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .step-content {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        #detail-modal, #gallery-modal {
+            transition: opacity 0.3s ease;
+            backdrop-filter: blur(4px);
+        }
+        input[type="checkbox"] {
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 2px;
+            cursor: pointer;
+            position: relative;
+        }
+        input[type="checkbox"]:checked {
+            background-color: #000;
+            border-color: #000;
+        }
+        input[type="checkbox"]:checked::after {
+            content: '';
+            position: absolute;
+            left: 4px;
+            top: 1px;
+            width: 4px;
+            height: 8px;
+            border: solid white;
+            border-width: 0 1px 1px 0;
+            transform: rotate(45deg);
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-6 md:p-12">
+
+    <!-- Progress Tracker -->
+    <div id="progress-container" class="fixed top-0 left-0 w-full h-[1px] bg-gray-100 hidden">
+        <div id="progress-bar" class="progress-bar" style="width: 0%"></div>
+    </div>
+
+    <div id="app" class="w-full max-w-xl">
+        <form id="quoteForm">
+            
+            <!-- Step 0: Welcome -->
+            <div id="step-0" class="step-content flex flex-col items-center text-center space-y-10 py-12">
+                <div class="space-y-4 flex flex-col items-center">
+                    <!-- 로고 이미지 -->
+                    <img src="오스카CI_04LogoBLACK_1.png" 
+                         onerror="this.style.display='none'; document.getElementById('fallback-logo').classList.remove('hidden');"
+                         alt="OSKA" 
+                         class="h-12 md:h-16 w-auto object-contain mb-2">
+                    
+                    <h1 id="fallback-logo" class="text-5xl font-light tracking-[0.4em] uppercase hidden">OSKA</h1>
+                    
+                    <p class="text-[10px] text-zinc-500 font-medium tracking-[0.5em] uppercase">Private Exterior Docent</p>
+                </div>
+                <div class="space-y-6">
+                    <h2 class="text-2xl font-normal leading-snug">
+                        안녕하세요.<br>
+                        오스카 프라이빗 도슨트에 오신 것을 환영합니다.
+                    </h2>
+                    <p class="text-sm text-zinc-600 font-light leading-relaxed max-w-xs mx-auto">
+                        몇 가지 질문을 통해 당신의 공간에 가장 어울리는 구성과 예산 범위를 함께 안내해드립니다.
+                    </p>
+                    <p class="text-[10px] text-zinc-400 font-normal pt-4">
+                        ※ 입력값은 '초기 가이드'이며, 최종 견적은 실측 후 확정됩니다.
+                    </p>
+                </div>
+                <button type="button" onclick="nextStep(1)" class="px-14 py-5 bg-black text-white text-[11px] tracking-[0.3em] hover:bg-zinc-800 transition-all font-light">
+                    투어 시작하기
+                </button>
+            </div>
+
+            <!-- Step 1: Space Type -->
+            <div id="step-1" class="step-content hidden space-y-10">
+                <div class="space-y-4">
+                    <span class="text-[10px] uppercase tracking-widest text-zinc-500 font-medium">Step 01. Space</span>
+                    <h3 class="text-2xl font-light leading-tight">먼저, 어떤 공간을 계획하고 계신지 들려주세요 :)</h3>
+                    <p class="text-sm text-zinc-500 font-light leading-relaxed">계획하고 계신 공간 유형을 선택해주세요. (중복 가능)</p>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div onclick="toggleOption('spaces', '주거공간', this)" class="option-card p-8 flex flex-col items-center text-center space-y-5">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>
+                        <span class="text-xs font-normal tracking-wide">주거공간</span>
+                    </div>
+                    <div onclick="toggleOption('spaces', '상업공간', this)" class="option-card p-8 flex flex-col items-center text-center space-y-5">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                            <path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z"/>
+                            <path d="M3 9l1-4h16l1 4"/>
+                            <path d="M3 9h18"/>
+                            <path d="M7 9v4m5-4v4m5-4v4"/>
+                            <path d="M3 13h18"/>
+                        </svg>
+                        <span class="text-xs font-normal tracking-wide">상업공간</span>
+                    </div>
+                    <div onclick="toggleOption('spaces', '호텔, 리조트, 카페', this)" class="option-card p-8 flex flex-col items-center text-center space-y-5">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M17 8h1a4 4 0 1 1 0 8h-1M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z"/></svg>
+                        <span class="text-xs font-normal tracking-wide">호텔, 리조트, 카페</span>
+                    </div>
+                    <div onclick="toggleOption('spaces', '공공프로젝트', this)" class="option-card p-8 flex flex-col items-center text-center space-y-5">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                            <path d="M4 20h16"/>
+                            <path d="M5 20v-8h14v8"/>
+                            <path d="M12 5c-3.5 0-5 2.5-5 5h10c0-2.5-1.5-5-5-5z"/>
+                            <path d="M12 3v2"/>
+                            <path d="M7 12v8m3-8v8m4-8v8m3-8v8"/>
+                        </svg>
+                        <span class="text-xs font-normal tracking-wide">공공프로젝트</span>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center pt-6">
+                    <button type="button" onclick="nextStep(0)" class="text-[11px] text-zinc-400 underline underline-offset-8 uppercase tracking-widest font-normal hover:text-black">Back</button>
+                    <button type="button" onclick="validateStep1()" class="px-12 py-4 bg-black text-white text-[11px] tracking-[0.2em] font-light">다음 단계</button>
+                </div>
+            </div>
+
+            <!-- Step 2: Purpose -->
+            <div id="step-2" class="step-content hidden space-y-10">
+                <div class="space-y-4">
+                    <span class="text-[10px] uppercase tracking-widest text-zinc-500 font-medium">Step 02. Purpose</span>
+                    <h3 class="text-2xl font-light leading-tight">이 공간에서 어떤 시간을 보내고 싶으신가요?</h3>
+                    <p class="text-sm text-zinc-500 font-light leading-relaxed">간단한 선택만으로 어울리는 구성을 제안해드립니다. (중복 가능)</p>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div onclick="toggleOption('purposes', '휴게 중심', this)" class="option-card p-8 flex flex-col items-center text-center space-y-5">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M5 11l4-5h10l-4 13H5l4-8zM5 19h14"/></svg>
+                        <span class="text-xs font-normal tracking-wide">휴게 중심</span>
+                    </div>
+                    <div onclick="toggleOption('purposes', '생활 확장', this)" class="option-card p-8 flex flex-col items-center text-center space-y-5">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M3 12V21H12V12H3Z"/><path d="M12 21H21V15H12M3 12L12 5L21 12" stroke-dasharray="2 2"/></svg>
+                        <span class="text-xs font-normal tracking-wide">생활 확장</span>
+                    </div>
+                    <div onclick="toggleOption('purposes', '동선 연결', this)" class="option-card p-8 flex flex-col items-center text-center space-y-5">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="5" cy="17" r="2"/><circle cx="19" cy="7" r="2"/><path d="M7 17s5 0 8-5 4-5 4-5"/></svg>
+                        <span class="text-xs font-normal tracking-wide">동선 연결</span>
+                    </div>
+                    <div onclick="toggleOption('purposes', '사계절 활용', this)" class="option-card p-8 flex flex-col items-center text-center space-y-5">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/><path d="M12 12l5.5-5.5M12 12l-5.5 5.5"/></svg>
+                        <span class="text-xs font-normal tracking-wide">사계절 활용</span>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center pt-6">
+                    <button type="button" onclick="nextStep(1)" class="text-[11px] text-zinc-400 underline underline-offset-8 uppercase tracking-widest font-normal hover:text-black">Back</button>
+                    <button type="button" onclick="validateStep2()" class="px-12 py-4 bg-black text-white text-[11px] tracking-[0.2em] font-light">다음 단계</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Scale (Icons) -->
+            <div id="step-3" class="step-content hidden space-y-10">
+                <div class="space-y-4">
+                    <span class="text-[10px] uppercase tracking-widest text-zinc-500 font-medium">Step 03. Scale</span>
+                    <h3 class="text-2xl font-light leading-tight">파고라를 중심으로 어떤 구성을 계획하고 계신가요?</h3>
+                    <p class="text-sm text-zinc-500 font-light leading-relaxed">선택에 따라 추천 구성과 예상 범위가 달라집니다. (중복 가능)</p>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div onclick="toggleOption('scales', '오스카 파고라', this)" class="option-card p-6 flex flex-col items-center space-y-4">
+                        <!-- 지붕이 평평한 파고라 아이콘 -->
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M3 5h18v3H3zM5 8v12m14-12v12M12 8v12"/></svg>
+                        <span class="text-xs font-normal">오스카 파고라</span>
+                    </div>
+                    <div onclick="toggleOption('scales', '글라스월', this)" class="option-card p-6 flex flex-col items-center space-y-4">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="4" y="4" width="16" height="16" rx="1"/><path d="M10 4v16M14 4v16M4 10h16M4 14h16" stroke-opacity="0.3"/></svg>
+                        <span class="text-xs font-normal">글라스월</span>
+                    </div>
+                    <div onclick="toggleOption('scales', '데크', this)" class="option-card p-6 flex flex-col items-center space-y-4">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M3 10h18M3 14h18M3 18h18M7 10v8m5-8v8m5-8v8"/></svg>
+                        <span class="text-xs font-normal">데크</span>
+                    </div>
+                    <div onclick="toggleOption('scales', '인테리어', this)" class="option-card p-6 flex flex-col items-center space-y-4">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M12 3a4 4 0 0 1 4 4v2H8V7a4 4 0 0 1 4-4zM8 9h8v9H8V9zM7 21h10"/></svg>
+                        <span class="text-xs font-normal">인테리어</span>
+                    </div>
+                    <div onclick="toggleOption('scales', '익스테리어', this)" class="option-card p-6 flex flex-col items-center space-y-4">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M2 20h20M4 20V10l8-6 8 6v10M12 10v10"/></svg>
+                        <span class="text-xs font-normal">익스테리어</span>
+                    </div>
+                    <div onclick="toggleOption('scales', '조경', this)" class="option-card p-6 flex flex-col items-center space-y-4">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M12 22V12M12 12c4 0 7-3 7-7s-3-2-7 0c-4-2-7-1-7 3s3 4 7 4z"/></svg>
+                        <span class="text-xs font-normal">조경</span>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center pt-6">
+                    <button type="button" onclick="nextStep(2)" class="text-[11px] text-zinc-400 underline underline-offset-8 uppercase tracking-widest font-normal hover:text-black">Back</button>
+                    <button type="button" onclick="validateStep3()" class="px-12 py-4 bg-black text-white text-[11px] tracking-[0.2em] font-light">다음 단계</button>
+                </div>
+            </div>
+
+            <!-- Step 4: Scale (Area) -->
+            <div id="step-4" class="step-content hidden space-y-10">
+                <div class="space-y-4">
+                    <span class="text-[10px] uppercase tracking-widest text-zinc-500 font-medium">Step 04. Scale</span>
+                    <h3 class="text-2xl font-light leading-tight">좋아요! 이제 공간의 크기를 살펴볼까요?</h3>
+                    <p class="text-sm text-zinc-500 font-light leading-relaxed">준비하고 계신 공간은 어느 규모인가요? 대략적인 크기만 알려주셔도 충분합니다.</p>
+                </div>
+                <div class="grid grid-cols-1 gap-3">
+                    <div onclick="selectSize('10m2 이하', 5, this)" class="option-card p-6 flex justify-between items-center px-10">
+                        <span class="text-xs font-normal">10m² 이하</span>
+                    </div>
+                    <div onclick="selectSize('10~20m2', 15, this)" class="option-card p-6 flex justify-between items-center px-10">
+                        <span class="text-xs font-normal">10~20m²</span>
+                    </div>
+                    <div onclick="selectSize('20~30m2', 25, this)" class="option-card p-6 flex justify-between items-center px-10">
+                        <span class="text-xs font-normal">20~30m²</span>
+                    </div>
+                    <div onclick="selectSize('30m2 이상', 40, this)" class="option-card p-6 flex justify-between items-center px-10">
+                        <span class="text-xs font-normal">30m² 이상</span>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center pt-6">
+                    <button type="button" onclick="nextStep(3)" class="text-[11px] text-zinc-400 underline underline-offset-8 uppercase tracking-widest font-normal hover:text-black">Back</button>
+                </div>
+            </div>
+
+            <!-- Step 5: Select Lineup -->
+            <div id="step-5" class="step-content hidden space-y-10">
+                <div class="space-y-4">
+                    <span class="text-[10px] uppercase tracking-widest text-zinc-500 font-medium">Step 05. Select</span>
+                    <h3 class="text-2xl font-light leading-tight">공간에 가장 어울리는 파고라를 함께 찾아보겠습니다.</h3>
+                    <p class="text-sm text-zinc-500 font-light leading-relaxed">각 라인업의 특징을 확인하고 선택해주세요.</p>
+                </div>
+                <div class="space-y-4">
+                    <div class="option-card p-8 flex flex-col space-y-4" onclick="selectLineup('STAY', this)">
+                        <div class="flex justify-between items-start">
+                            <div class="space-y-1">
+                                <h4 class="text-lg font-normal tracking-tight">1. STAY (스테이)</h4>
+                                <span class="inline-block text-[9px] border border-zinc-200 px-2 py-0.5 text-zinc-400 font-medium tag-special">수동/전동 선택</span>
+                            </div>
+                            <button type="button" onclick="event.stopPropagation(); showDetail('STAY')" class="btn-detail text-[10px] border border-zinc-200 px-4 py-2 text-zinc-500 hover:border-black hover:text-black transition-all font-medium uppercase tracking-tighter">자세히 보기</button>
+                        </div>
+                        <ul class="text-[11px] text-zinc-600 space-y-1 font-normal leading-relaxed pr-12">
+                            <li>- 실용적인 기본형</li>
+                            <li>- 수동/전동 선택 가능, 필요한 기능만 담은 라인업</li>
+                            <li>- 첫 설치부터 부담 없이 시작하기 좋은 모델기능 중심</li>
+                        </ul>
+                    </div>
+                    <div class="option-card p-8 flex flex-col space-y-4" onclick="selectLineup('STAY Tone&Tone', this)">
+                        <div class="flex justify-between items-start">
+                            <div class="space-y-1">
+                                <h4 class="text-lg font-normal tracking-tight">2. STAY Tone&Tone (스테이 톤앤톤)</h4>
+                                <span class="inline-block text-[9px] border border-zinc-200 px-2 py-0.5 text-zinc-400 font-medium tag-special">디자인 완성도</span>
+                            </div>
+                            <button type="button" onclick="event.stopPropagation(); showDetail('STAY_TNT')" class="btn-detail text-[10px] border border-zinc-200 px-4 py-2 text-zinc-500 hover:border-black hover:text-black transition-all font-medium uppercase tracking-tighter">자세히 보기</button>
+                        </div>
+                        <ul class="text-[11px] text-zinc-600 space-y-1 font-normal leading-relaxed pr-12">
+                            <li>- 디자인이 강화된 기본형</li>
+                            <li>- 건축과 자연스럽게 어우러지는 ‘완성도’ 중심 라인업</li>
+                            <li>- 기본 기능은 유지하면서 외관 디테일까지 더한 모델</li>
+                        </ul>
+                    </div>
+                    <div class="option-card p-8 flex flex-col space-y-4" onclick="selectLineup('AIREA', this)">
+                        <div class="flex justify-between items-start">
+                            <div class="space-y-1">
+                                <h4 class="text-lg font-normal tracking-tight">3. AIREA (에어리어)</h4>
+                                <span class="inline-block text-[9px] bg-black text-white px-2 py-0.5 font-medium">베스트셀러 / 전동 전용</span>
+                            </div>
+                            <button type="button" onclick="event.stopPropagation(); showDetail('AIREA')" class="btn-detail text-[10px] border border-zinc-200 px-4 py-2 text-zinc-500 hover:border-black hover:text-black transition-all font-medium uppercase tracking-tighter">자세히 보기</button>
+                        </div>
+                        <ul class="text-[11px] text-zinc-600 space-y-1 font-normal leading-relaxed pr-12">
+                            <li>- 전동 중심 프리미엄</li>
+                            <li>- 편의성과 완성도를 동시에, STAY와 OPERA의 중간 포지션</li>
+                            <li>- 전동의 만족감을 가장 ‘균형 있게’ 누릴 수 있는 모델</li>
+                        </ul>
+                    </div>
+                    <div class="option-card p-8 flex flex-col space-y-4" onclick="selectLineup('OPERA', this)">
+                        <div class="flex justify-between items-start">
+                            <div class="space-y-1">
+                                <h4 class="text-lg font-normal tracking-tight">4. OPERA (오페라)</h4>
+                                <span class="inline-block text-[9px] bg-black text-white px-2 py-0.5 font-medium">플래그십 / 전동 전용</span>
+                            </div>
+                            <button type="button" onclick="event.stopPropagation(); showDetail('OPERA')" class="btn-detail text-[10px] border border-zinc-200 px-4 py-2 text-zinc-500 hover:border-black hover:text-black transition-all font-medium uppercase tracking-tighter">자세히 보기</button>
+                        </div>
+                        <ul class="text-[11px] text-zinc-600 space-y-1 font-normal leading-relaxed pr-12">
+                            <li>- 압도적인 기술력의 플래그십</li>
+                            <li>- 최고 수준의 안전성과 안정감, 대형/상업 공간에 특히 강한 모델</li>
+                            <li>- 국내 유일 ‘구조검토서’ 보유 라인업</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center pt-6">
+                    <button type="button" onclick="nextStep(4)" class="text-[11px] text-zinc-400 underline underline-offset-8 uppercase tracking-widest font-normal hover:text-black">Back</button>
+                </div>
+            </div>
+
+            <!-- Step 6: Mood (Classic Deleted) -->
+            <div id="step-6" class="step-content hidden space-y-8">
+                <div class="space-y-4">
+                    <span class="text-[10px] uppercase tracking-widest text-zinc-500 font-medium">Step 06. Mood</span>
+                    <h3 class="text-2xl font-light leading-tight">지향하시는 스타일이 있으신가요?</h3>
+                </div>
+                <div class="grid grid-cols-1 gap-3">
+                    <div onclick="selectSingleOption('mood', '미니멀', 6)" class="option-card p-8 text-left group relative">
+                        <div class="flex justify-between items-start">
+                            <strong class="text-sm font-normal tracking-widest uppercase block">Minimal</strong>
+                            <button type="button" onclick="event.stopPropagation(); showGallery('미니멀')" class="btn-gallery text-[9px] border border-zinc-200 px-3 py-1.5 text-zinc-400 hover:border-black hover:text-black transition-all uppercase tracking-tighter">GALLERY : 공간 보기</button>
+                        </div>
+                        <p class="text-[11px] text-zinc-500 mt-3 font-normal leading-relaxed pr-24">불필요한 장식을 덜어내고 건축 본연의 아름다움과 본질에 집중합니다. 간결한 직선과 여백이 주는 정돈된 미학을 통해 일상의 복잡함을 비우고, 시각적 평온함과 자유로움을 만끽할 수 있는 절제된 공간을 제안합니다.</p>
+                    </div>
+                    <div onclick="selectSingleOption('mood', '모던', 6)" class="option-card p-8 text-left group relative">
+                        <div class="flex justify-between items-start">
+                            <strong class="text-sm font-normal tracking-widest uppercase block">Modern</strong>
+                            <button type="button" onclick="event.stopPropagation(); showGallery('모던')" class="btn-gallery text-[9px] border border-zinc-200 px-3 py-1.5 text-zinc-400 hover:border-black hover:text-black transition-all uppercase tracking-tighter">GALLERY : 공간 보기</button>
+                        </div>
+                        <p class="text-[11px] text-zinc-500 mt-3 font-normal leading-relaxed pr-24">세련된 도시적 감성과 트렌디한 라이프스타일을 반영합니다. 유행을 타지 않는 깔끔한 디자인에 실용적인 기능을 조화시켜, 언제 보아도 감각적이고 스마트한 분위기를 연출합니다. 현대적인 건축물과 가장 완벽한 합을 이룹니다.</p>
+                    </div>
+                    <div onclick="selectSingleOption('mood', '프리미엄', 6)" class="option-card p-8 text-left group relative">
+                        <div class="flex justify-between items-start">
+                            <strong class="text-sm font-normal tracking-widest uppercase block">Premium</strong>
+                            <button type="button" onclick="event.stopPropagation(); showGallery('프리미엄')" class="btn-gallery text-[9px] border border-zinc-200 px-3 py-1.5 text-zinc-400 hover:border-black hover:text-black transition-all uppercase tracking-tighter">GALLERY : 공간 보기</button>
+                        </div>
+                        <p class="text-[11px] text-zinc-500 mt-3 font-normal leading-relaxed pr-24">최상의 자재와 장인정신이 깃든 정교한 디테일로 독보적인 아우라를 완성합니다. 단순히 기능적인 공간을 넘어 당신의 성공과 안목을 증명하는 상징적인 장소로서, 어디에서도 경험할 수 없는 특별한 가치와 최상위의 휴식을 선사합니다.</p>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center pt-4">
+                    <button type="button" onclick="nextStep(5)" class="text-[11px] text-zinc-400 underline underline-offset-8 uppercase tracking-widest font-normal hover:text-black">Back</button>
+                </div>
+            </div>
+
+            <!-- Step 7: Contact Info (Submit Action Moved Here) -->
+            <div id="step-7" class="step-content hidden space-y-10">
+                <div class="space-y-4">
+                    <span class="text-[10px] uppercase tracking-widest text-zinc-500 font-medium">Step 07. Contact</span>
+                    <h3 class="text-2xl font-light leading-tight">선택하신 내용을 바탕으로 맞춤 안내를 준비했습니다.</h3>
+                    <div class="space-y-2 text-[13px] text-zinc-500 font-normal leading-relaxed">
+                        <p>정확한 견적 정보 전달을 위해 본인의 연락처를 입력해 주세요.</p>
+                        <p>작성해주신 연락처를 통해 카달로그 및 당사의 자료가 전송 될 예정입니다.</p>
+                        <p class="text-red-500 text-[11px]">※ 타인의 연락처를 무단으로 사용하는 행위는 형사 처벌의 대상이 될 수 있습니다.</p>
+                        <p class="pt-2 text-black font-medium">약 1분 내로 받아보실 수 있습니다!</p>
+                    </div>
+                </div>
+                <div class="space-y-6">
+                    <div class="border-b border-zinc-200 py-2"><input type="text" name="user_name" id="input-name" required placeholder="성함" class="w-full bg-transparent text-sm font-normal py-2 focus:outline-none"></div>
+                    <div class="border-b border-zinc-200 py-2">
+                        <input type="tel" name="user_phone" id="input-phone" required placeholder="연락처 (010-0000-0000)" maxlength="13" class="w-full bg-transparent text-sm font-normal py-2 focus:outline-none">
+                    </div>
+                    <div class="flex items-center space-x-3 pt-2">
+                        <input type="checkbox" id="marketing-consent">
+                        <label for="marketing-consent" class="text-[11px] text-zinc-500 cursor-pointer">개인정보 수집 이용 및 마케팅 수신에 동의합니다. (필수)</label>
+                    </div>
+                </div>
+                <div class="pt-10">
+                    <!-- 버튼명 변경 및 데이터 전송 트리거 -->
+                    <button type="button" id="btn-validate-7" onclick="validateStep7()" class="w-full py-6 bg-zinc-200 text-zinc-500 text-[11px] tracking-[0.4em] font-normal transition-all cursor-not-allowed">견적 요청 전송하기</button>
+                    <p id="consent-warning" class="text-[10px] text-red-400 mt-3 text-center hidden">정보 입력 및 마케팅 수신 동의가 필요합니다.</p>
+                </div>
+                <div class="text-center pt-4">
+                    <button type="button" onclick="nextStep(6)" class="text-[11px] text-zinc-400 underline underline-offset-8 uppercase tracking-widest font-normal hover:text-black">Back</button>
+                </div>
+            </div>
+
+            <!-- Step 8: Thanks (Confirm Step Only) -->
+            <div id="step-8" class="step-content hidden space-y-10">
+                <div class="space-y-4">
+                    <span class="text-[10px] uppercase tracking-widest text-zinc-500 font-medium">Final Step. Thanks</span>
+                    <h3 class="text-2xl font-light leading-tight">투어를 완료해주셔서 감사합니다.</h3>
+                    <p class="text-sm text-zinc-500 font-light">선택하신 최종 요약 정보입니다. 상담 자료가 성공적으로 요청되었습니다.</p>
+                </div>
+                <div id="summary-box" class="p-10 border border-zinc-100 space-y-5 text-[11px] font-normal mt-6">
+                    <h4 class="text-[9px] tracking-[0.4em] uppercase text-zinc-400 border-b pb-4 mb-6">OSKA Selection Summary</h4>
+                    <div class="flex justify-between items-start"><span class="text-zinc-500">라인업</span><span id="summary-lineup" class="text-black font-medium">-</span></div>
+                    <div class="flex justify-between items-start"><span class="text-zinc-500">공간 유형</span><span id="summary-space" class="text-black font-medium text-right">-</span></div>
+                    <div class="flex justify-between items-start"><span class="text-zinc-500">공간 목적</span><span id="summary-purpose" class="text-black font-medium text-right">-</span></div>
+                    <div class="flex justify-between items-start"><span class="text-zinc-500">구성 항목</span><span id="summary-scale" class="text-black font-medium text-right">-</span></div>
+                    <div class="flex justify-between items-start"><span class="text-zinc-500">공사 규모</span><span id="summary-size" class="text-black font-medium">-</span></div>
+                    <div class="pt-6 border-t border-zinc-100 space-y-4">
+                        <div class="flex justify-between items-baseline">
+                            <span class="text-[9px] uppercase tracking-widest text-zinc-400">Estimated Price</span>
+                            <span id="summary-price" class="text-2xl font-normal tracking-tighter">계산 중...</span>
+                        </div>
+                        <p class="text-[10px] text-red-500 font-normal leading-relaxed text-center whitespace-pre-line">
+                            본 금액은 편의를 위해 산출된 대략적인 예상가입니다.
+                            고객님의 환경에 꼭 맞는 정확하고 섬세한 견적을 위해, 빠른 시일 내에 전담 담당자(혹은 각 지역의 지사장)가 직접 연락드려 친절히 안내해 드리겠습니다.
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- [수정] 버튼 그룹 영역 -->
+                <div class="pt-6 space-y-3">
+                    <!-- 1. 투어 종료 버튼 -->
+                    <button type="button" onclick="finalizeTour()" class="w-full py-6 bg-black text-white text-[11px] tracking-[0.4em] font-normal hover:bg-zinc-800 transition-all shadow-xl">투어 종료 하기</button>
+                    
+                    <!-- 2. 추가된 링크 버튼 (홈페이지 / 유튜브) -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <a href="http://www.oska.co.kr" target="_blank" class="flex items-center justify-center w-full py-4 border border-zinc-200 text-zinc-500 text-[10px] tracking-[0.2em] font-normal hover:border-black hover:text-black transition-all">
+                            OSKA 홈페이지
+                        </a>
+                        <a href="https://www.youtube.com/@oska_office" target="_blank" class="flex items-center justify-center w-full py-4 border border-zinc-200 text-zinc-500 text-[10px] tracking-[0.2em] font-normal hover:border-black hover:text-black transition-all">
+                            OSKA 유튜브
+                        </a>
+                    </div>
+                </div>
+
+                <div class="text-center pt-4">
+                    <button type="button" onclick="nextStep(7)" class="text-[11px] text-zinc-400 underline underline-offset-8 uppercase tracking-widest font-normal hover:text-black">Back</button>
+                </div>
+            </div>
+
+            <!-- Success -->
+            <div id="success-message" class="hidden text-center space-y-12 py-20">
+                <div class="w-20 h-20 border border-black rounded-full flex items-center justify-center mx-auto opacity-20"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.8"><polyline points="20 6 9 17 4 12"/></svg></div>
+                <div class="space-y-4">
+                    <h3 class="text-2xl font-light tracking-tight">도슨트 투어가 완료되었습니다.</h3>
+                    <p class="text-sm text-zinc-500 font-normal leading-relaxed max-w-xs mx-auto">전달해주신 내용은 오스카 팀이 확인 후 연락드리겠습니다.</p>
+                </div>
+                <button type="button" onclick="location.reload()" class="px-14 py-4 border border-zinc-200 text-[10px] tracking-[0.3em] font-normal hover:bg-black hover:text-white transition-all">RETURN TO HOME</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Detail Modal -->
+    <div id="detail-modal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-6 z-50">
+        <div class="bg-white w-full max-w-lg p-10 space-y-6 relative max-h-[80vh] overflow-y-auto">
+            <button onclick="closeDetail()" class="absolute top-6 right-6 text-zinc-400 hover:text-black uppercase text-[10px] tracking-widest">Close</button>
+            <h4 id="modal-title" class="text-xl font-light border-b pb-4 tracking-widest uppercase">Lineup Details</h4>
+            <div id="modal-content" class="text-[12px] font-normal text-zinc-600 leading-relaxed whitespace-pre-line py-4"></div>
+            <button onclick="closeDetail()" class="w-full py-4 bg-black text-white text-[11px] tracking-[0.3em] font-normal mt-4">확인했습니다</button>
+        </div>
+    </div>
+
+    <!-- Gallery Modal -->
+    <div id="gallery-modal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-6 z-[60]">
+        <div class="bg-white w-full max-w-2xl p-4 space-y-4 relative flex flex-col items-center">
+            <button onclick="closeGallery()" class="absolute -top-10 right-0 text-white uppercase text-[11px] tracking-widest">Close ✕</button>
+            <div class="w-full h-[60vh] overflow-hidden bg-zinc-100 flex items-center justify-center">
+                <img id="gallery-image" src="" alt="공간 이미지" class="w-full h-full object-cover">
+            </div>
+            <div class="text-center py-2">
+                <h5 id="gallery-title" class="text-sm font-normal tracking-widest uppercase"></h5>
+            </div>
+            <button onclick="closeGallery()" class="w-full py-4 bg-black text-white text-[11px] tracking-[0.3em] font-normal">갤러리 닫기</button>
+        </div>
+    </div>
+
+    <script>
+        (function() { emailjs.init("Wee5GwKPwshYQEFty"); })();
+
+        let currentStep = 0;
+        const totalSteps = 8;
+        const selectionData = { spaces: [], purposes: [], scales: [], sizeStr: '', sizeVal: 0, lineup: '', mood: '', price: 0 };
+
+        const productDetails = {
+            STAY: `1. STAY (스테이)\n\n가장 가볍지만, 핵심 기능은 놓치지 않았습니다.\n오스카의 라인업 중 가장 경량화된 모델로, 실용성을 극대화한 제품입니다. 꼭 필요한 기능을 충실히 담아 합리적인 선택을 원하는 분들께 최적의 대안이 됩니다. 수동과 전동 중 구동 방식을 선택할 수 있으며, LED 조명 옵션을 추가해 공간의 분위기를 더할 수 있습니다.`,
+            STAY_TNT: `2. STAY Tone&Tone (스테이 톤앤톤)\n\n건축물과 하나가 되는 디자인, 미적 완성도의 정점.\n스테이 플랫폼에 고급스러운 외장재를 더했습니다. 1:1.6의 황금비율을 적용한 상단 프레임은 오스카가 추구하는 디자인 철학을 완벽히 보여줍니다. 내부는 화이트나 차콜 톤으로 깔끔하게 연출하고, 외부 색상은 건축물과 어우러도록 맞춤 디자인이 가능합니다. 미적 감각을 중시하는 디자이너와 건축가들이 건물의 가치를 높이기 위해 가장 먼저 찾는 제품입니다. (수동/전동 선택 가능 및 LED 옵션 지원)`,
+            AIREA: `3. AIREA (에어리어)\n\n오스카의 베스트셀러, 프리미엄의 기준을 세우다.\n본격적인 프리미엄 라인의 시작을 알리는 제품입니다. 업계 최고 수준의 견고한 블레이드 구조를 자랑하며, 특히 특허받은 곡선형 블레이드는 한국의 기록적인 폭설도 거뜬히 견딜 수 있도록 설계되었습니다. 강력한 내구성을 위해 전용 전동 시스템으로만 구동되며, 듀얼 LED 라인등, 블레이드 LED, 태양광 옵션 등 오스카의 모든 기술을 집약한 가장 완성도 높은 모델입니다.`,
+            OPERA: `4. OPERA (오페라)\n\n압도적인 기술력과 안전성, 오스카를 상징하는 플래그십.\n오페라는 오스카의 기술 철학이 집약된 최상위 프리미엄 모델입니다. 독보적인 곡선형 블레이드 디자인은 물론, 국내 파고라 중 유일하게 구조검토서를 보유하여 가장 안전한 구조물임을 증명했습니다. 해외 유수의 프리미엄 브랜드보다 뛰어난 품질을 유지하며, VVIP 공간이나 최고급 상업 시설에 주로 적용됩니다. 높은 안전성이 요구되는 반도체 공장이나 대형 건축물 설계 시 필수적으로 반영되는 제품입니다. (전동 전용 / 풀 옵션 플랫폼 지원)`
+        };
+
+        const moodImages = {
+            '미니멀': '미니멀.jpg',
+            '모던': '모던.jpg',
+            '프리미엄': '프리미엄.jpg'
+        };
+
+        const phoneInput = document.getElementById('input-phone');
+        phoneInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/[^0-9]/g, '');
+            let result = '';
+            if (value.length < 4) result = value;
+            else if (value.length < 7) result = value.substr(0, 3) + '-' + value.substr(3);
+            else if (value.length < 11) result = value.substr(0, 3) + '-' + value.substr(3, 3) + '-' + value.substr(6);
+            else result = value.substr(0, 3) + '-' + value.substr(3, 4) + '-' + value.substr(7, 4);
+            e.target.value = result;
+            checkStep7State();
+        });
+
+        document.getElementById('input-name').addEventListener('input', checkStep7State);
+        const consentCheckbox = document.getElementById('marketing-consent');
+        consentCheckbox.addEventListener('change', checkStep7State);
+
+        function checkStep7State() {
+            const name = document.getElementById('input-name').value;
+            const phone = document.getElementById('input-phone').value;
+            const consent = document.getElementById('marketing-consent').checked;
+            const nextBtn = document.getElementById('btn-validate-7');
+            if (name && phone.length >= 12 && consent) {
+                nextBtn.classList.remove('bg-zinc-200', 'text-zinc-500', 'cursor-not-allowed');
+                nextBtn.classList.add('bg-black', 'text-white', 'hover:bg-zinc-800');
+                document.getElementById('consent-warning').classList.add('hidden');
+            } else {
+                nextBtn.classList.add('bg-zinc-200', 'text-zinc-500', 'cursor-not-allowed');
+                nextBtn.classList.remove('bg-black', 'text-white', 'hover:bg-zinc-800');
+            }
+        }
+
+        function updateProgressBar() {
+            const bar = document.getElementById('progress-bar');
+            const container = document.getElementById('progress-container');
+            if (currentStep > 0 && currentStep < totalSteps) {
+                container.classList.remove('hidden');
+                bar.style.width = (currentStep / totalSteps) * 100 + '%';
+            } else { container.classList.add('hidden'); }
+        }
+
+        function nextStep(step) {
+            document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
+            currentStep = step;
+            const target = document.getElementById(`step-${currentStep}`);
+            if (target) target.classList.remove('hidden');
+            updateProgressBar();
+            window.scrollTo(0, 0);
+            if (currentStep === 8) calculateEstimation();
+        }
+
+        function toggleOption(key, value, element) {
+            const list = selectionData[key];
+            const idx = list.indexOf(value);
+            if (idx > -1) { list.splice(idx, 1); element.classList.remove('active'); }
+            else { list.push(value); element.classList.add('active'); }
+        }
+
+        function validateStep1() { if (selectionData.spaces.length === 0) return; nextStep(2); }
+        function validateStep2() { if (selectionData.purposes.length === 0) return; nextStep(3); }
+        function validateStep3() { if (selectionData.scales.length === 0) return; nextStep(4); }
+
+        // Step 07에서 전송 로직 실행 (수정됨: Zapier + EmailJS 병렬 처리)
+        async function validateStep7() {
+            const name = document.getElementById('input-name').value;
+            const phone = document.getElementById('input-phone').value;
+            const consent = document.getElementById('marketing-consent').checked;
+            
+            if(!name || phone.length < 12 || !consent) {
+                document.getElementById('consent-warning').classList.remove('hidden');
+                return;
+            }
+
+            const submitBtn = document.getElementById('btn-validate-7');
+            submitBtn.disabled = true;
+            submitBtn.textContent = "SENDING...";
+
+            // [중요] 이메일 보내기 전에 가격을 먼저 계산해야 함!
+            calculateEstimation();
+
+            // 데이터 전송 파라미터 준비
+            const templateParams = {
+                user_name: name,
+                user_phone: phone,
+                space_types: selectionData.spaces.join(', '),
+                space_purposes: selectionData.purposes.join(', '),
+                construction_scales: selectionData.scales.join(', '),
+                area_size: selectionData.sizeStr,
+                lineup_type: selectionData.lineup,
+                mood_type: selectionData.mood,
+                estimated_price: `약 ${selectionData.price.toLocaleString()}만 원 ~`
+            };
+
+            // 1. 문자 발송 (Zapier Webhook - index.html의 로직 적용)
+            const ZAPIER_WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/26207101/uqxa60n/";
+            
+            const zapierPromise = fetch(ZAPIER_WEBHOOK_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify({
+                    phone: phone,
+                    name: name,
+                    date: new Date().toLocaleString(),
+                    source: 'OSKA_Docent_Web',
+                    details: selectionData // 필요 시 선택 정보도 Zapier로 전송
+                })
+            });
+
+            // 2. 이메일 발송 (EmailJS)
+            const emailPromise = emailjs.send('service_zeilhoa', 'template_wx1s7ok', templateParams);
+
+            try {
+                // 두 전송 작업 동시 실행
+                await Promise.all([zapierPromise, emailPromise]);
+                console.log('SUCCESS! Email and SMS sent.');
+                nextStep(8);
+            } catch (error) {
+                console.error('FAILED...', error);
+                // 에러 발생 시 사용자 알림 및 버튼 복구
+                submitBtn.disabled = false;
+                submitBtn.textContent = "전송 실패 (다시 시도)";
+                alert("전송 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+            }
+        }
+
+        function finalizeTour() {
+            document.getElementById(`step-8`).classList.add('hidden');
+            document.getElementById('success-message').classList.remove('hidden');
+            document.getElementById('progress-container').classList.add('hidden');
+        }
+
+        function selectSize(str, val, element) {
+            selectionData.sizeStr = str;
+            selectionData.sizeVal = val;
+            const cards = document.querySelectorAll('#step-4 .option-card');
+            cards.forEach(card => card.classList.remove('active'));
+            element.classList.add('active');
+            setTimeout(() => nextStep(5), 500);
+        }
+
+        function selectLineup(value, element) {
+            selectionData.lineup = value;
+            const cards = document.querySelectorAll('#step-5 .option-card');
+            cards.forEach(card => card.classList.remove('active'));
+            element.classList.add('active');
+            setTimeout(() => nextStep(6), 500);
+        }
+
+        function selectSingleOption(key, value, step) {
+            selectionData[key] = value;
+            const cards = document.querySelectorAll(`#step-${step} .option-card`);
+            cards.forEach(c => c.classList.remove('active'));
+            const targetCard = Array.from(cards).find(c => c.textContent.includes(value));
+            if(targetCard) targetCard.classList.add('active');
+            setTimeout(() => nextStep(step + 1), 500);
+        }
+
+        function showDetail(key) {
+            document.getElementById('modal-content').innerText = productDetails[key];
+            const modal = document.getElementById('detail-modal');
+            modal.classList.remove('hidden');
+            modal.style.opacity = '1';
+        }
+        function closeDetail() {
+            const modal = document.getElementById('detail-modal');
+            modal.style.opacity = '0';
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+        function showGallery(mood) {
+            const modal = document.getElementById('gallery-modal');
+            document.getElementById('gallery-image').src = moodImages[mood];
+            document.getElementById('gallery-image').onerror = function() {
+                // 로컬 파일 로드 실패 시 대체 이미지 (미니멀 컨셉)
+                this.src = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=1200';
+            };
+            document.getElementById('gallery-title').innerText = `OSKA GALLERY : ${mood} STYLE`;
+            modal.classList.remove('hidden');
+            modal.style.opacity = '1';
+        }
+        function closeGallery() {
+            const modal = document.getElementById('gallery-modal');
+            modal.style.opacity = '0';
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        function calculateEstimation() {
+            // 1. Step 03: Scale Price (개당 300만원)
+            let scalePrice = selectionData.scales.length * 300;
+
+            // 2. Step 05: Lineup Price (추가금)
+            let lineupPrice = 0;
+            if (selectionData.lineup === 'STAY') lineupPrice = 700;
+            else if (selectionData.lineup === 'STAY Tone&Tone') lineupPrice = 1000;
+            else if (selectionData.lineup === 'AIREA') lineupPrice = 1500;
+            else if (selectionData.lineup === 'OPERA') lineupPrice = 2000;
+
+            // 3. Step 06: Mood Price (추가금)
+            let moodPrice = 0;
+            if (selectionData.mood === '미니멀') moodPrice = 0;
+            else if (selectionData.mood === '모던') moodPrice = 200;
+            else if (selectionData.mood === '프리미엄') moodPrice = 500;
+
+            // 총합 계산
+            const total = scalePrice + lineupPrice + moodPrice;
+            selectionData.price = total;
+
+            // UI 업데이트 (요소가 존재할 때만 실행)
+            const summaryPriceEl = document.getElementById('summary-price');
+            if (summaryPriceEl) {
+                document.getElementById('summary-lineup').textContent = selectionData.lineup;
+                document.getElementById('summary-space').innerHTML = selectionData.spaces.join('<br>');
+                document.getElementById('summary-purpose').innerHTML = selectionData.purposes.join(', ');
+                document.getElementById('summary-scale').textContent = selectionData.scales.join(', ');
+                document.getElementById('summary-size').textContent = selectionData.sizeStr;
+                summaryPriceEl.textContent = `약 ${total.toLocaleString()}만 원 ~`;
+            }
+        }
+
+        // 기본 폼 제출 방지 (로직은 validateStep7에서 처리함)
+        document.getElementById('quoteForm').addEventListener('submit', (e) => e.preventDefault());
+    </script>
+</body>
+</html>
