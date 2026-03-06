@@ -434,15 +434,52 @@
                     <div class="border-b border-zinc-200 py-2">
                         <input type="tel" name="user_phone" id="input-phone" required placeholder="연락처 (010-0000-0000)" maxlength="13" class="w-full bg-transparent text-sm font-normal py-2 focus:outline-none">
                     </div>
-                    <div class="flex items-center space-x-3 pt-2">
-                        <input type="checkbox" id="marketing-consent">
-                        <label for="marketing-consent" class="text-[11px] text-zinc-500 cursor-pointer">개인정보 수집 이용 및 마케팅 수신에 동의합니다. (필수)</label>
+                    
+                    <div class="space-y-4 pt-2">
+                        <!-- 동의 항목 1 -->
+                        <div class="flex flex-col space-y-2">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <input type="checkbox" id="marketing-consent">
+                                    <label for="marketing-consent" class="text-[11px] text-zinc-500 cursor-pointer">개인정보 수집 이용 및 마케팅 수신에 동의합니다. (필수)</label>
+                                </div>
+                                <button type="button" onclick="toggleConsentDetail('marketing-detail')" class="text-[10px] text-zinc-400 underline underline-offset-4">펼쳐보기</button>
+                            </div>
+                            <div id="marketing-detail" class="hidden bg-zinc-50 p-4 text-[10px] text-zinc-500 leading-relaxed whitespace-pre-line border border-zinc-100">
+                                오스카는 고객님께 최적화된 서비스와 이벤트 정보를 제공하기 위해 아래와 같이 개인정보를 수집 및 이용합니다.
+                                
+                                1. 수집 항목: 성명, 연락처
+                                2. 수집 및 이용 목적: 도슨트 결과 전송, 신제품 안내, 프로모션 참여 기회 제공, 뉴스레터 발송, 서비스 만족도 조사
+                                3. 보유 및 이용 기간: 수집일로부터 2년 또는 동의 철회 시까지 (단, 관계 법령에 따라 보존이 필요한 경우 해당 기간까지 보관)
+                                
+                                ※ 동의를 거부할 권리가 있으며, 미동의 시 도슨트 서비스 이용 및 견적 안내가 제한될 수 있습니다.
+                            </div>
+                        </div>
+
+                        <!-- 동의 항목 2 -->
+                        <div class="flex flex-col space-y-2">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <input type="checkbox" id="third-party-consent">
+                                    <label for="third-party-consent" class="text-[11px] text-zinc-500 cursor-pointer">개인정보 제3자 제공 동의 (필수)</label>
+                                </div>
+                                <button type="button" onclick="toggleConsentDetail('third-party-detail')" class="text-[10px] text-zinc-400 underline underline-offset-4">펼쳐보기</button>
+                            </div>
+                            <div id="third-party-detail" class="hidden bg-zinc-50 p-4 text-[10px] text-zinc-500 leading-relaxed whitespace-pre-line border border-zinc-100">
+                                개인정보 제3자 제공 동의
+                                제공받는 자: 오스카 지사 및 협력사
+                                제공 항목: 성명, 연락처, 주소, 이메일
+                                제공 목적: 지역별 상담 연결, 현장 방문 및 견적, 시공 안내
+                                이용 기간: 수집일로부터 1년 (고객 요청 시 즉시 파기)
+                                ※ 동의를 거부할 권리가 있으며, 미동의 시 지사 상담 및 안내가 제한될 수 있습니다.
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="pt-10">
                     <!-- 버튼명 변경 및 데이터 전송 트리거 -->
                     <button type="button" id="btn-validate-7" onclick="validateStep7()" class="w-full py-6 bg-zinc-200 text-zinc-500 text-[11px] tracking-[0.4em] font-normal transition-all cursor-not-allowed">견적 요청 전송하기</button>
-                    <p id="consent-warning" class="text-[10px] text-red-400 mt-3 text-center hidden">정보 입력 및 마케팅 수신 동의가 필요합니다.</p>
+                    <p id="consent-warning" class="text-[10px] text-red-400 mt-3 text-center hidden">정보 입력 및 모든 필수 약관 동의가 필요합니다.</p>
                 </div>
                 <div class="text-center pt-4">
                     <button type="button" onclick="nextStep(6)" class="text-[11px] text-zinc-400 underline underline-offset-8 uppercase tracking-widest font-normal hover:text-black">Back</button>
@@ -564,15 +601,28 @@
         });
 
         document.getElementById('input-name').addEventListener('input', checkStep7State);
-        const consentCheckbox = document.getElementById('marketing-consent');
-        consentCheckbox.addEventListener('change', checkStep7State);
+        
+        // 체크박스 이벤트 리스너
+        document.getElementById('marketing-consent').addEventListener('change', checkStep7State);
+        document.getElementById('third-party-consent').addEventListener('change', checkStep7State);
+
+        function toggleConsentDetail(id) {
+            const el = document.getElementById(id);
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+            } else {
+                el.classList.add('hidden');
+            }
+        }
 
         function checkStep7State() {
             const name = document.getElementById('input-name').value;
             const phone = document.getElementById('input-phone').value;
-            const consent = document.getElementById('marketing-consent').checked;
+            const consent1 = document.getElementById('marketing-consent').checked;
+            const consent2 = document.getElementById('third-party-consent').checked;
             const nextBtn = document.getElementById('btn-validate-7');
-            if (name && phone.length >= 12 && consent) {
+            
+            if (name && phone.length >= 12 && consent1 && consent2) {
                 nextBtn.classList.remove('bg-zinc-200', 'text-zinc-500', 'cursor-not-allowed');
                 nextBtn.classList.add('bg-black', 'text-white', 'hover:bg-zinc-800');
                 document.getElementById('consent-warning').classList.add('hidden');
@@ -627,9 +677,10 @@
         async function validateStep7() {
             const name = document.getElementById('input-name').value;
             const phone = document.getElementById('input-phone').value;
-            const consent = document.getElementById('marketing-consent').checked;
+            const consent1 = document.getElementById('marketing-consent').checked;
+            const consent2 = document.getElementById('third-party-consent').checked;
             
-            if(!name || phone.length < 12 || !consent) {
+            if(!name || phone.length < 12 || !consent1 || !consent2) {
                 document.getElementById('consent-warning').classList.remove('hidden');
                 return;
             }
@@ -654,7 +705,6 @@
                 want_follow_up: selectionData.wantFollowUp
             };
 
-            // 수정됨: 오염된 URL 복구 (중복 경로 제거)
             const ZAPIER_WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/26207101/uqxa60n/";
             
             const zapierPromise = fetch(ZAPIER_WEBHOOK_URL, {
